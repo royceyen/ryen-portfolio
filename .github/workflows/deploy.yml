@@ -1,4 +1,4 @@
-name: Build and Deploy Portfolio
+name: Build and Publish to Main/Docs
 
 on:
   push:
@@ -6,27 +6,35 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # 1. 签出代码
+      - uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      # 2. 安装 Node.js
+      - uses: actions/setup-node@v3
         with:
           node-version: '16'
 
+      # 3. 安装依赖并构建
       - name: Install dependencies
         run: npm install
-
-      - name: Build project
+      - name: Build site
         run: npm run build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      # 4. 清空旧 docs，复制新 dist 到 docs
+      - name: Prepare docs folder
+        run: |
+          rm -rf docs
+          mv dist docs
+
+      # 5. 提交 docs 文件夹回 main 分支
+      - name: Commit and Push Changes
+        uses: EndBug/add-and-commit@v9
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          publish_branch: gh-pages
+          author_name: github-actions[bot]
+          author_email: github-actions[bot]@users.noreply.github.com
+          message: "chore: rebuild docs from dist"
+          add: "docs"
